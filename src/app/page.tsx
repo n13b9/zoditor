@@ -1,8 +1,51 @@
-import { Box, Flex, Button, Tooltip, ActionIcon } from "@mantine/core";
+"use client";
+import {
+  Box,
+  Flex,
+  Button,
+  Tooltip,
+  ActionIcon,
+  useComputedColorScheme,
+} from "@mantine/core";
 import Editor, { type Monaco, useMonaco } from "@monaco-editor/react";
 import { CopyButton } from "../features/copyButton";
+import { LuEraser } from "react-icons/lu";
+import { FiAlertCircle, FiLink } from "react-icons/fi";
+
+import { useState } from "react";
+import {
+  getAppDataFromLocalStorage,
+  getAppDataFromSearchParams,
+  getURLwithAppData,
+} from "../utils/appData";
+import { DEFAULT_APP_DATA, EDITOR_OPTIONS } from "../constants";
+import { initMonaco, setMonacoDeclarationTypes } from "../utils/monaco";
+import * as zod from "../zod";
+
+await initMonaco();
+
+const initialAppData =
+  getAppDataFromSearchParams() ??
+  getAppDataFromLocalStorage() ??
+  DEFAULT_APP_DATA;
 
 export default function Home() {
+  const [schema, setSchema] = useState<string>(() => initialAppData.schema);
+  const [values, setValues] = useState<Array<string>>(
+    () => initialAppData.values
+  );
+
+  const monaco = useMonaco();
+  const computedColorScheme = useComputedColorScheme("light");
+
+  const schemaValidation = zod.validateSchema(schema);
+  const evaluatedSchema = schemaValidation.success
+    ? schemaValidation.data
+    : undefined;
+  const schemaError = !schemaValidation.success
+    ? schemaValidation.error
+    : undefined;
+
   return (
     <Box className="grid grid-rows-[auto_1fr] h-dvh">
       {/* <Header>
@@ -15,26 +58,6 @@ export default function Home() {
             justify="space-between"
             gap="sm"
           >
-            {/* <Flex gap="sm" align="center" flex={1}>
-              Zod schema
-              <VersionPicker
-                value={version}
-                onChange={async (ver) => {
-                  setVersion(ver);
-                }}
-                disabled={isLoading}
-              />
-              <Button
-                rel="noopener noreferrer"
-                target="_blank"
-                size="compact-xs"
-                variant="transparent"
-                component="a"
-                href="https://zod.dev/"
-              >
-                Docs
-              </Button>
-            </Flex> */}
             <CopyButton value={schema} />
             <Tooltip label="Clear schema" withArrow>
               <ActionIcon
